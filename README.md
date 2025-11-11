@@ -22,6 +22,6 @@ Bolna Bhai is repository which consist the open source module based on web-socke
         * VOXTRAL
 
 - Ghajani (Things I forgot to add)
-    requirements.txt
-    documentation
-    integration to communication layers
+    + requirements.txt
+    + documentation
+    + integration to communication layers
