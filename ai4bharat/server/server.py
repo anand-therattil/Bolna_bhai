@@ -8,7 +8,7 @@ import websockets
 import json
 
 from model import ASR
-from vad import SileroVAD
+from vad import VAD
 
 
 class ASRWebSocketServer:
@@ -18,7 +18,7 @@ class ASRWebSocketServer:
             login(token=token)
         
         self.asr_model = ASR()
-        self.vad_model = SileroVAD()
+        self.vad_model = VAD()
     
     async def process_audio(self, websocket):
         """Handle WebSocket connections and process audio streams"""
