@@ -3,7 +3,9 @@ Bolna Bhai is repository which consist the open source module based on web-socke
 
 - Implemented (Will have issues)
     + LLM
-        - Qwen  
+        - Qwen
+    + ASR 
+        * AI4BHARAT INDIC CONFORMOR(Pipecat Issue Left)
 
 - Models Implement Left For Future (MILFF) 
     + LLM 
@@ -11,7 +13,6 @@ Bolna Bhai is repository which consist the open source module based on web-socke
         * LLAMA  
         * Mistral
     + ASR
-        * AI4BHARAT INDIC CONFORMOR
         * Nvidia Canary QWEN 
     + TTS 
         * Orpheus 

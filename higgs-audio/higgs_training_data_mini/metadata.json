@@ -1,0 +1,50 @@
+{
+  "dataset_info": {
+    "total_samples": 2797,
+    "speakers": [
+      "huo_speaker"
+    ],
+    "languages": [
+      "zh"
+    ],
+    "total_duration": 12173.9,
+    "avg_duration": 4.35,
+    "created_from": [
+      "/root/code/new_work_code/HI-TransPA/swfit_workdir/fresh-little-lemon-workspace/data/swift_format/huo_audio.jsonl"
+    ]
+  },
+  "samples": [
+    {
+      "id": "huo_speaker_000000",
+      "audio_file": "huo_speaker_000000.wav",
+      "transcript_file": "huo_speaker_000000.txt",
+      "duration": 3.86,
+      "speaker_id": "huo_speaker",
+      "speaker_name": "Huo",
+      "scene": "recording_system",
+      "emotion": "alerting",
+      "language": "zh",
+      "gender": "unknown",
+      "quality_score": 1.0,
+      "original_audio_path": "/root/code/new_work_code/HI-TransPA/swfit_workdir/fresh-little-lemon-workspace/data/swift_format/audio_splits_huo/14_cropped_with_audio_line000001_vid00_f7b81293.wav",
+      "user_instruction": "<audio> /translate",
+      "task_type": "audio_generation"
+    },
+    {
+      "id": "huo_speaker_000001",
+      "audio_file": "huo_speaker_000001.wav",
+      "transcript_file": "huo_speaker_000001.txt",
+      "duration": 3.2,
+      "speaker_id": "huo_speaker",
+      "speaker_name": "Huo",
+      "scene": "quiet_room",
+      "emotion": "questioning",
+      "language": "zh",
+      "gender": "unknown",
+      "quality_score": 1.0,
+      "original_audio_path": "/root/code/new_work_code/HI-TransPA/swfit_workdir/fresh-little-lemon-workspace/data/swift_format/audio_splits_huo/126_cropped_with_audio_line000002_vid00_66220ae5.wav",
+      "user_instruction": "<audio> /translate",
+      "task_type": "audio_generation"
+    }
+  ]
+}
