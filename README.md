@@ -4,19 +4,21 @@ Bolna Bhai is repository which consist the open source module based on web-socke
 - Implemented (Will have issues)
     + LLM
         - Qwen  
+        - AI4BHARAT INDIC CONFORMOR
+        - Higgs Audio
 
 - Models Implement Left For Future (MILFF) 
+    + Communication Layer
     + LLM 
         * gpt-oss-20b
         * LLAMA  
         * Mistral
     + ASR
-        * AI4BHARAT INDIC CONFORMOR
         * Nvidia Canary QWEN 
     + TTS 
         * Orpheus 
         * neutts 
-        * Higgs Audio
+       
     + LLM + ASR
         * ULTRAVOX
         * VOXTRAL
