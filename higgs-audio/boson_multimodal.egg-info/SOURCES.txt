@@ -1,0 +1,25 @@
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+boson_multimodal/__init__.py
+boson_multimodal/constants.py
+boson_multimodal/data_types.py
+boson_multimodal.egg-info/PKG-INFO
+boson_multimodal.egg-info/SOURCES.txt
+boson_multimodal.egg-info/dependency_links.txt
+boson_multimodal.egg-info/top_level.txt
+boson_multimodal/data_collator/__init__.py
+boson_multimodal/data_collator/higgs_audio_collator.py
+boson_multimodal/dataset/__init__.py
+boson_multimodal/dataset/chatml_dataset copy.py
+boson_multimodal/dataset/chatml_dataset.py
+boson_multimodal/model/__init__.py
+boson_multimodal/model/higgs_audio/__init__.py
+boson_multimodal/model/higgs_audio/audio_head.py
+boson_multimodal/model/higgs_audio/common.py
+boson_multimodal/model/higgs_audio/configuration_higgs_audio.py
+boson_multimodal/model/higgs_audio/cuda_graph_runner.py
+boson_multimodal/model/higgs_audio/custom_modules.py
+boson_multimodal/model/higgs_audio/modeling_higgs_audio.py
+boson_multimodal/model/higgs_audio/utils.py
