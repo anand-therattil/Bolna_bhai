@@ -19,3 +19,5 @@ click
 langid
 jieba
 accelerate>=0.26.0
+websockets
+pipecat-ai
