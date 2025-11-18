@@ -1,0 +1,6 @@
+pipecat-ai[webrtc]
+python-dotenv
+fastapi[all]
+uvicorn
+pipecat-ai[google,silero, webrtc]>=0.0.82
+pipecat-ai[deepgram,openai]
