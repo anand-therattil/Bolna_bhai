@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Voice Agent</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        #status { font-size: 20px; margin: 20px; }
+        button { padding: 10px 20px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>WebRTC Voice Agent</h1>
+    <p id="status">Disconnected</p>
+    <button id="connect-btn">Connect</button>
+    <audio id="audio-el" autoplay></audio>
+
+    <script>
+        const statusEl = document.getElementById("status")
+        const buttonEl = document.getElementById("connect-btn")
+        const audioEl = document.getElementById("audio-el")
+
+        let connected = false
+        let peerConnection = null
+
+        const sendIceCandidate = async (pc, candidate) => {
+            await fetch('/api/offer', {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                pc_id: pc.pc_id,
+                candidates:[{
+                    candidate: candidate.candidate,
+                    sdp_mid: candidate.sdpMid,
+                    sdp_mline_index: candidate.sdpMLineIndex
+                }]
+              })
+            });
+        };
+
+        const createSmallWebRTCConnection = async (audioTrack) => {
+            const config = {
+              iceServers:[
+                {
+                  urls:"stun:stun.l.google.com:19302",
+                }
+              ]
+            };
+            const pc = new RTCPeerConnection(config)
+            
+            // Queue to store ICE candidates until we have received the answer and have a session in progress
+            pc.pendingIceCandidates = []
+            pc.canSendIceCandidates = false
+            
+            addPeerConnectionEventListeners(pc)
+            pc.ontrack = e => audioEl.srcObject = e.streams[0]
+            // SmallWebRTCTransport expects to receive both transceivers
+            pc.addTransceiver(audioTrack, { direction: 'sendrecv' })
+            pc.addTransceiver('video', { direction: 'sendrecv' })
+            await pc.setLocalDescription(await pc.createOffer())
+            const offer = pc.localDescription
+            const response = await fetch('/api/offer', {
+                body: JSON.stringify({ sdp: offer.sdp, type: offer.type}),
+                headers: { 'Content-Type': 'application/json' },
+                method: 'POST',
+            });
+            const answer = await response.json()
+            pc.pc_id = answer.pc_id
+            await pc.setRemoteDescription(answer)
+            
+            // Now we can send ICE candidates
+            pc.canSendIceCandidates = true
+            
+            // Send any queued ICE candidates
+            for (const candidate of pc.pendingIceCandidates) {
+                await sendIceCandidate(pc, candidate)
+            }
+            pc.pendingIceCandidates = []
+            
+            return pc
+        }
+
+        const connect = async () => {
+            _onConnecting()
+            const audioStream = await navigator.mediaDevices.getUserMedia({audio: true})
+            peerConnection= await createSmallWebRTCConnection(audioStream.getAudioTracks()[0])
+        }
+
+        const addPeerConnectionEventListeners = (pc) => {
+            pc.oniceconnectionstatechange = () => {
+                console.log("oniceconnectionstatechange", pc?.iceConnectionState)
+            }
+            pc.onconnectionstatechange = () => {
+                console.log("onconnectionstatechange", pc?.connectionState)
+                let connectionState = pc?.connectionState
+                if (connectionState === 'connected') {
+                    _onConnected()
+                } else if (connectionState === 'disconnected') {
+                    _onDisconnected()
+                }
+            }
+            pc.onicecandidate = async (event) => {
+                if (event.candidate) {
+                    console.log("New ICE candidate:", event.candidate);
+                    // Check if we can send ICE candidates (we have received the answer with pc_id)
+                    if (pc.canSendIceCandidates && pc.pc_id) {
+                        // Send immediately
+                        await sendIceCandidate(pc, event.candidate)
+                    } else {
+                        // Queue the candidate until we have pc_id
+                        pc.pendingIceCandidates.push(event.candidate)
+                    }
+                } else {
+                    console.log("All ICE candidates have been sent.");
+                }
+            };
+        }
+
+        const _onConnecting = () => {
+            statusEl.textContent = "Connecting"
+            buttonEl.textContent = "Disconnect"
+            connected = true
+        }
+
+        const _onConnected = () => {
+            statusEl.textContent = "Connected"
+            buttonEl.textContent = "Disconnect"
+            connected = true
+        }
+
+        const _onDisconnected = () => {
+            statusEl.textContent = "Disconnected"
+            buttonEl.textContent = "Connect"
+            connected = false
+        }
+
+        const disconnect = () => {
+            if (!peerConnection) {
+                return
+            }
+            peerConnection.close()
+            peerConnection = null
+            _onDisconnected()
+        }
+
+        buttonEl.addEventListener("click", async () => {
+            if (!connected) {
+                await connect()
+            } else {
+                disconnect()
+            }
+        });
+    </script>
+</body>
+</html>
