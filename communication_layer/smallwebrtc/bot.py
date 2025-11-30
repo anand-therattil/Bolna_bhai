@@ -10,7 +10,7 @@ from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
-from pipecat.services.deepgram.stt import DeepgramSTTService
+from pipecat.services.ai4bharat.stt import Ai4BharatSTTService
 from pipecat.services.deepgram.tts import DeepgramTTSService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import TransportParams
@@ -36,10 +36,10 @@ async def run_bot(webrtc_connection):
         ),
     )
   
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
+    stt = Ai4BharatSTTService(ws_url = "ws://localhost:8765",language= "hi",)
 
-    tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY"), voice="aura-2-andromeda-en")
-
+    tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY") , voice="aura-2-andromeda-en")#
+                             
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
 
 

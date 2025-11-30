@@ -79,6 +79,17 @@ class ASR:  # noqa: D101
         *,
         lang: str = "hi",
         sr: int | None = None,
+    ) -> Dict:
+        wav_t, wav_np, sr = self._load_audio(audio, sr)
+        text = self._decode(wav_t, lang)
+        return {"text": text.strip()}
+
+    def ASR_VAD(
+        self,
+        audio: Union[str, np.ndarray, torch.Tensor, Path],
+        *,
+        lang: str = "hi",
+        sr: int | None = None,
         timestamps: List | None=None
     ) -> Dict:
         wav_t, wav_np, sr = self._load_audio(audio, sr)
@@ -95,7 +106,6 @@ class ASR:  # noqa: D101
                 chunks.append({"text": text, "timestamp": [start_time/self.TARGET_SR, end_time/self.TARGET_SR]})
                 full_text_parts.append(text)
         return {"text": " ".join(full_text_parts).strip(), "chunks": chunks}
-
 
     # -------------------------------------------------------------------
     # Audio I/O
