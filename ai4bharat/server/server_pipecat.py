@@ -116,7 +116,7 @@ class ASRWebSocketServer:
                 "error": "Invalid JSON"
             }))
     
-    async def start(self, host="0.0.0.0", port=8765):
+    async def start(self, host="0.0.0.0", port=8761):
         """Start the WebSocket server"""
         print(f"Starting ASR WebSocket server on ws://{host}:{port}")
         async with websockets.serve(self.process_audio, host, port):
