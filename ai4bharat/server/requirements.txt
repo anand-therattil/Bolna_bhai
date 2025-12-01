@@ -1,0 +1,7 @@
+numpy
+soundfile
+huggingface_hub
+websockets
+torch
+torchaudio
+transformers

@@ -5,9 +5,9 @@ Bolna Bhai is repository which consist the open source module based on web-socke
     + LLM
         - Qwen
     + ASR 
-        - AI4BHARAT INDIC CONFORMOR(Pipecat Issue Left)
+        - AI4BHARAT INDIC CONFORMOR
     + TTS 
-        - Higgs Audio
+        - NOTHING SO FAR
     + COMMUNICATION LAYER
         - SmallWEBRTC
 
@@ -21,6 +21,7 @@ Bolna Bhai is repository which consist the open source module based on web-socke
     + TTS 
         * Orpheus 
         * neutts 
+        * ai4bharat-IndicF5
     + LLM + ASR
         * ULTRAVOX
         * VOXTRAL
@@ -33,4 +34,3 @@ Bolna Bhai is repository which consist the open source module based on web-socke
 - Ghajani (Things I forgot to add)
     + requirements.txt
     + documentation
-    + integration to communication layers
