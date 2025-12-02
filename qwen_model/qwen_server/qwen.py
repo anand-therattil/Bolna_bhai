@@ -9,6 +9,7 @@ from typing import Dict, Optional, List
 
 import websockets
 from loguru import logger
+from config.loader import load_config
 from websockets.server import WebSocketServerProtocol
 
 # vLLM + HF
@@ -21,8 +22,27 @@ from vllm.engine.arg_utils import AsyncEngineArgs
 logger.remove()
 logger.add(sys.stdout, level="INFO", format="{time:HH:mm:ss} | {level} | {message}")
 
+cfg = load_config()
+QWEN_CFG = cfg["qwen"]
+
+QWEN_PROMPT = QWEN_CFG["system_prompt"]
+QWEN_HOST = QWEN_CFG["host"]
+QWEN_PORT = QWEN_CFG["port"]
+QWEN_MODEL_NAME = QWEN_CFG["model_name"]
+
+GPU_UTIL = QWEN_CFG.get("gpu_memory_utilization", 0.5)
+MAX_MODEL_LEN = QWEN_CFG.get("max_model_len", 4096)
+DEFAULT_TEMP = QWEN_CFG.get("default_temperature", 0.7)
+MIN_TEMP = QWEN_CFG.get("temperature_min", 0.1)
+DEFAULT_MAX_TOKENS = QWEN_CFG.get("default_max_tokens", 512)
+PARTIAL_N = QWEN_CFG.get("partial_every_n_tokens", 3)
+GEN_TIMEOUT = QWEN_CFG["timeouts"]["generation_timeout_sec"]
+PING_INTERVAL = QWEN_CFG["timeouts"]["client_ping_interval"]
+PING_TIMEOUT = QWEN_CFG["timeouts"]["client_ping_timeout"]
+
+
 # --------------------- Simple system prompt for testing ---------------------
-SIMPLE_SYSTEM_PROMPT = """You are a helpful assistant for Customer Support. Be helpful and answer the user's questions directly."""
+SIMPLE_SYSTEM_PROMPT = QWEN_PROMPT
 
 # --------------------- Server state ---------------------
 ACTIVE: Dict[str, asyncio.Task] = {}
@@ -43,8 +63,8 @@ class QwenModel:
         # Initialize vLLM engine with conservative settings
         args = AsyncEngineArgs(
             model=model_name,
-            gpu_memory_utilization=0.5,  # Conservative GPU usage
-            max_model_len=4096,  # Reduced context length
+            gpu_memory_utilization= GPU_UTIL,
+            max_model_len=MAX_MODEL_LEN,
             trust_remote_code=True,
         )
         self.engine = AsyncLLMEngine.from_engine_args(args)
@@ -147,8 +167,9 @@ async def handle_connect(ws: WebSocketServerProtocol, msg: dict):
 async def handle_generate(ws: WebSocketServerProtocol, msg: dict):
     """Handle text generation request."""
     rid = msg.get("request_id", str(uuid.uuid4()))
-    temp = float(msg.get("temperature", 0.7))
-    max_tok = int(msg.get("max_tokens", 200))
+    temp = float(msg.get("temperature", DEFAULT_TEMP))
+    temp = max(temp, MIN_TEMP)
+    max_tok = int(msg.get("max_tokens", DEFAULT_MAX_TOKENS))
     messages = msg.get("messages", [])
     text_input = msg.get("text", "")
     caller_id = msg.get("caller_id", CALLER_IDS.get(ws, "unknown"))
@@ -186,7 +207,7 @@ async def handle_generate(ws: WebSocketServerProtocol, msg: dict):
                     partial_count += 1
                     
                     # Send partial every few tokens
-                    if partial_count % 3 == 0:  # Send every 3 tokens
+                    if partial_count % PARTIAL_N == 0:  # Send every partial n tokens
                         await safe_send(ws, {
                             "type": "partial",
                             "request_id": rid,
@@ -287,7 +308,7 @@ async def test_model():
     messages = [{"role": "user", "content": "Hello, how are you?"}]
     
     response = ""
-    async for chunk in MODEL.stream_generate(messages, 0.7, 50):
+    async for chunk in MODEL.stream_generate(messages, DEFAULT_TEMP, 50):
         response += chunk
         print(chunk, end="", flush=True)
     
@@ -309,7 +330,8 @@ async def main():
         login(token=hf_token)
     
     # Initialize model
-    model_name = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+    # model_name = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+    model_name = QWEN_MODEL_NAME
     
     global MODEL
     MODEL = QwenModel(model_name)
@@ -323,8 +345,10 @@ async def main():
     logger.info(f"✓ Model loaded and tested: {model_name}")
     
     # Server configuration
-    host = os.environ.get("QWEN_HOST", "0.0.0.0")
-    port = int(os.environ.get("QWEN_PORT", "8766"))
+    # host = os.environ.get("QWEN_HOST", "0.0.0.0")
+    # port = int(os.environ.get("QWEN_PORT", "8766"))
+    host = QWEN_HOST
+    port = QWEN_PORT
     
     logger.info(f"🚀 Starting server on ws://{host}:{port}")
     
@@ -332,8 +356,8 @@ async def main():
         ws_handler,
         host,
         port,
-        ping_interval=20,
-        ping_timeout=20,
+        ping_interval=PING_INTERVAL,
+        ping_timeout=PING_TIMEOUT,
         max_size=None
     ):
         stop = asyncio.Future()
