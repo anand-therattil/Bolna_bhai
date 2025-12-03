@@ -4,3 +4,4 @@ websockets
 loguru
 numpy
 huggingface_hub
+pyyaml

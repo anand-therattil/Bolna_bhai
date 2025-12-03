@@ -322,6 +322,12 @@
 # -*- coding: utf-8 -*-
 
 """Pipecat client service for Ultravox LLM over WebSocket (audio → streamed text)."""
+import sys
+from pathlib import Path
+
+# go up three levels: llm.py -> qwen_model (1) -> Bolan_bhai (2)
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 import asyncio
 import base64
@@ -329,6 +335,7 @@ import json
 import time
 import uuid
 import sys
+from config.loader import load_config
 from typing import AsyncGenerator, Dict, List, Optional
 
 import numpy as np
@@ -353,6 +360,9 @@ from pipecat.processors.aggregators.llm_response import (
     LLMAssistantResponseAggregator,
 )
 from pipecat.processors.frameworks.openai import OpenAILLMContext
+
+config = load_config()
+qwen_cfg = config["qwen"]
 
 class _Buf:
     def __init__(self):
@@ -628,3 +638,24 @@ class QwenService(LLMService):
             self._buf.processing = False
             self._buf.frames = []
             self._buf.started_at = None
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    qwen_service = QwenService(
+        server_url=f"ws://{qwen_cfg['host']}:{qwen_cfg['port']}",
+        language=qwen_cfg.get("language", "en"),  
+        temperature=qwen_cfg.get("default_temperature", 0.7),
+        max_tokens=qwen_cfg.get("default_max_tokens", 1024),
+        system_prompt=qwen_cfg.get("system_prompt"),
+        persistent_connection=True,
+        ping_interval=qwen_cfg["timeouts"]["client_ping_interval"],
+        ping_timeout=qwen_cfg["timeouts"]["client_ping_timeout"],
+    )
+
+    print("QwenService initialized with config.yaml settings")

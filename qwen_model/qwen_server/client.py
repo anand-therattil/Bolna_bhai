@@ -6,6 +6,14 @@ Simple Qwen LLM Server Client
 A minimal client for communicating with the Qwen LLM WebSocket server.
 """
 
+
+import sys
+from pathlib import Path
+
+# go up three levels: qwen.py -> qwen_server (1) -> qwen_model (2) -> Bolan_bhai (3)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
 import asyncio
 import json
 import uuid
@@ -14,6 +22,7 @@ import websockets
 from config.loader import load_config
 from typing import Optional, List, Dict, Any
 from websockets.client import WebSocketClientProtocol
+
 
 cfg = load_config()
 QWEN_URL = cfg["urls"]["qwen_server"]
