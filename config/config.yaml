@@ -20,6 +20,7 @@ qwen:
   default_temperature: 0.7       # Default sampling temp
   default_max_tokens: 1024       # Default max tokens
   partial_every_n_tokens: 3      # Partial streaming frequency
+  language: "en"
 
   # ----- LOGGING SETTINGS -----
   logging:
