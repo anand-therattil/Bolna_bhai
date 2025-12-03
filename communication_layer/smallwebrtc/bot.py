@@ -11,7 +11,9 @@ from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
 from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair
 from pipecat.services.ai4bharat.stt import Ai4BharatSTTService
-from pipecat.services.indri.tts import IndriTTSService
+from pipecat.services.indic_parler.tts import IndicParlerTTSService
+# from pipecat.services.indri.tts import IndriTTSService
+from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
@@ -35,23 +37,26 @@ async def run_bot(webrtc_connection):
             audio_out_10ms_chunks=2,
         ),
     )
-  
     stt = Ai4BharatSTTService(ws_url = "ws://localhost:8761",language= "hi",)
 
-    # tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY") , voice="aura-2-andromeda-en")#
-    tts = IndriTTSService(
-        base_url="ws://localhost:8760",
-        voice="[spkr_63]",
-        sample_rate=24000
-    )
-                             
+    # tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY") , voice="aura-2-andromeda-en")
+    # tts = IndriTTSService(
+    #     base_url="ws://localhost:8760",
+    #     voice="[spkr_63]",
+    #     sample_rate=24000
+    # )
+
+    tts = IndicParlerTTSService(
+            websocket_url="ws://localhost:8763",
+            voice_preset="female_expressive",  # or custom description
+        )                      
     llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
 
 
     messages = [
         {
             "role": "system",
-            "content": "You are very knowledgable about dogs. Your output will be spoken aloud, so avoid special characters that can't easily be spoken, such as emojis or bullet points. Respond to what the user said in a creative and helpful way.",
+            "content": SYSTEM_INSTRUCTION,
         },
     ]
 
