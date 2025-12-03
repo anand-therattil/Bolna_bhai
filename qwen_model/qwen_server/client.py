@@ -6,13 +6,34 @@ Simple Qwen LLM Server Client
 A minimal client for communicating with the Qwen LLM WebSocket server.
 """
 
+
+import sys
+from pathlib import Path
+
+# go up three levels: qwen.py -> qwen_server (1) -> qwen_model (2) -> Bolan_bhai (3)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
 import asyncio
 import json
 import uuid
-from typing import Optional, List, Dict, Any
-
+import logging
 import websockets
+from config.loader import load_config
+from typing import Optional, List, Dict, Any
 from websockets.client import WebSocketClientProtocol
+
+
+cfg = load_config()
+QWEN_URL = cfg["urls"]["qwen_server"]
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+
+logger = logging.getLogger(__name__)
+
 
 
 class SimpleQwenClient:
@@ -54,13 +75,13 @@ class SimpleQwenClient:
             
             if data.get("type") == "connected":
                 self.connected = True
-                print(f"✓ Connected with caller_id: {self.caller_id}")
+                logger.info(f"Connected with caller_id: {self.caller_id}")
                 return True
             
             return False
             
         except Exception as e:
-            print(f"Connection error: {e}")
+            logger.error(f"Failed to connect: {e}")
             return False
     
     async def disconnect(self) -> None:
@@ -68,7 +89,7 @@ class SimpleQwenClient:
         if self.websocket:
             await self.websocket.close()
             self.connected = False
-            print("Disconnected from server")
+            logger.info("Disconnected from server")
     
     async def generate_text(
         self,
@@ -127,17 +148,17 @@ class SimpleQwenClient:
             
             if response_type == "started":
                 if stream:
-                    print("Generating...", end=" ")
+                    logger.info("Generating...")
             
             elif response_type == "partial":
                 partial_text = data.get("text", "")
                 if stream:
-                    print(partial_text, end="", flush=True)
+                    logger.info(partial_text)
                 full_text = partial_text  # Keep updating with latest partial
             
             elif response_type in ["completed", "disconnect", "transfer"]:
                 if stream and response_type == "partial":
-                    print()  # New line after streaming
+                    logger.info("")  # New line after streaming
                 
                 # Get final text
                 final_text = data.get("text", full_text)
@@ -146,7 +167,7 @@ class SimpleQwenClient:
                 break
             
             elif response_type == "error":
-                print(f"Error: {data.get('error')}")
+                logger.error(f"Error: {data.get('error')}")
                 final_response = data
                 break
         
@@ -172,7 +193,7 @@ async def main():
     
     # Create client
     client = SimpleQwenClient(
-        server_url="ws://localhost:8766",
+        server_url=QWEN_URL,
         caller_id="test_user"
     )
     
@@ -183,28 +204,28 @@ async def main():
             return
         
         # Example 1: Simple text generation
-        print("\n--- Example 1: Simple Text ---")
+        logger.info("--- Example 1: Simple Text ---")
         response = await client.generate_text(
             text="Hello, I'm interested in know the sum of 100 + 100.",
             temperature=0.7,
             max_tokens=200
         )
-        print(f"Response: {response.get('text')}")
-        print(f"Type: {response.get('type')}")
+        logger.info(f"Response: {response.get('text')}")
+        logger.info(f"Type: {response.get('type')}")
         
         # # Example 2: With streaming
-        # print("\n--- Example 2: Streaming ---")
-        # print("Response: ", end="")
+        # logger.info("\n--- Example 2: Streaming ---")
+        # logger.info("Response: ", end="")
         # response = await client.generate_text(
         #     text="Tell me about your key features.",
         #     temperature=0.7,
         #     max_tokens=200,
         #     stream=True
         # )
-        print(f"\nType: {response.get('type')}")
-        
+        logger.info(f"\nType: {response.get('type')}")
+
         # # Example 3: Using messages for conversation
-        # print("\n--- Example 3: Conversation ---")
+        # logger.info("\n--- Example 3: Conversation ---")
         # messages = [
         #     {"role": "system", "content": "You are Tara, a helpful sales agent."},
         #     {"role": "user", "content": "I need a solution for 50 agents."}
@@ -214,36 +235,36 @@ async def main():
         #     temperature=0.7,
         #     max_tokens=200
         # )
-        # print(f"Response: {response.get('text')}")
+        # logger.info(f"Response: {response.get('text')}")
         
         # Example 4: Trigger function call
-        print("\n--- Example 4: Function Call ---")
+        logger.info("\n--- Example 4: Function Call ---")
         response = await client.generate_text(
             text="What products do you sell at TELECMI ?",
             temperature=0.7,
             max_tokens=300
         )
-        print(f"Response: {response.get('text')}")
-        print(f"Type: {response.get('type')}")
-        
+        logger.info(f"Response: {response.get('text')}")
+        logger.info(f"Type: {response.get('type')}")
+
         # Check for special responses
         if response.get("type") == "disconnect":
-            print("The agent has ended the conversation.")
+            logger.info("The agent has ended the conversation.")
         elif response.get("type") == "transfer":
-            print("You're being transferred to another agent.")
-        
+            logger.info("You're being transferred to another agent.")
+
         # Example 5: Simple helper method
-        print("\n--- Example 5: Simple Helper ---")
+        logger.info("\n--- Example 5: Simple Helper ---")
         text = await client.send_and_receive(
             "Do you integrate with Salesforce?",
             temperature=0.5,
             max_tokens=150
         )
-        print(f"Response: {text}")
+        logger.info(f"Response: {text}")
         
     except Exception as e:
-        print(f"Error: {e}")
-    
+        logger.error(f"Error: {e}")
+
     finally:
         # Disconnect
         await client.disconnect()
@@ -258,7 +279,7 @@ async def minimal_example():
     if await client.connect():
         # Send message and get response
         response = await client.send_and_receive("Hello, how can you help me?")
-        print(f"Agent: {response}")
+        logger.info(f"Agent: {response}")
         
         # Disconnect
         await client.disconnect()
@@ -266,9 +287,9 @@ async def minimal_example():
 
 if __name__ == "__main__":
     # Run the example
-    print("Starting Qwen Client Example...")
-    print("-" * 50)
-    
+    logger.info("Starting Qwen Client Example...")
+    logger.info("-" * 50)
+
     # Choose which example to run
     # asyncio.run(minimal_example())  # Uncomment for minimal example
-    asyncio.run(main())  # Full examples1
+    asyncio.run(main())  # Full examples
