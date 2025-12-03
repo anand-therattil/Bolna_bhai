@@ -6,6 +6,13 @@ Qwen LLM server with intelligent function calling for text-based interactions.
 The LLM decides when to disconnect or transfer based on conversation context.
 """
 
+import sys
+from pathlib import Path
+
+# go up three levels: qwen.py -> qwen_server (1) -> qwen_model (2) -> Bolan_bhai (3)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
 import asyncio
 import json
 import os, uuid
@@ -25,8 +32,47 @@ from transformers import AutoTokenizer
 from vllm import AsyncLLMEngine, SamplingParams
 from vllm.engine.arg_utils import AsyncEngineArgs
 
-# --------------------- Function calling config ---------------------
 
+from config.loader import load_config
+
+cfg = load_config()
+QWEN_CFG = cfg.get("qwen", {})
+
+# ---- BASIC SETTINGS ----
+QWEN_SYSTEM_PROMPT = QWEN_CFG.get("system_prompt", "")
+QWEN_HOST = QWEN_CFG.get("host", "0.0.0.0")
+QWEN_PORT = QWEN_CFG.get("port", 8766)
+QWEN_MODEL_NAME = QWEN_CFG.get("model_name", "Qwen/Qwen2.5-7B-Instruct")
+
+# ---- MODEL / vLLM SETTINGS ----
+GPU_UTIL = QWEN_CFG.get("gpu_memory_utilization", 0.6)
+MAX_MODEL_LEN = QWEN_CFG.get("max_model_len", 4096)
+
+DEFAULT_TEMP = QWEN_CFG.get("default_temperature", 0.7)
+MIN_TEMP = QWEN_CFG.get("temperature_min", 0.1)
+DEFAULT_MAX_TOKENS = QWEN_CFG.get("default_max_tokens", 512)
+PARTIAL_N = QWEN_CFG.get("partial_every_n_tokens", 3)
+
+# ---- TIMEOUT SETTINGS ----
+timeouts_cfg = QWEN_CFG.get("timeouts", {})
+GEN_TIMEOUT = timeouts_cfg.get("generation_timeout_sec", 60)
+PING_INTERVAL = timeouts_cfg.get("client_ping_interval", 20)
+PING_TIMEOUT = timeouts_cfg.get("client_ping_timeout", 20)
+
+# ---- ADVANCED vLLM ----
+vllm_cfg = QWEN_CFG.get("vllm", {})
+TENSOR_PARALLEL = vllm_cfg.get("tensor_parallel_size", 1)
+MAX_NUM_SEQS = vllm_cfg.get("max_num_seqs", 2048)
+
+# ---- LOGGING SETTINGS ----
+log_cfg = QWEN_CFG.get("logging", {})
+LOG_LEVEL = log_cfg.get("level", "INFO")
+LOG_FILE = log_cfg.get("logfile", "qwen_server.log")
+
+if LOG_FILE:
+    logger.add(LOG_FILE, level=LOG_LEVEL, rotation="10 MB")
+
+# --------------------- Function calling config ---------------------
 FUNCTION_DEFINITIONS = """
 Available Functions:
 
@@ -266,10 +312,13 @@ class QwenTextModel:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         args = AsyncEngineArgs(
             model=model_name,
-            gpu_memory_utilization=0.6,
-            max_model_len=8192,
+            gpu_memory_utilization=GPU_UTIL,
+            max_model_len=MAX_MODEL_LEN,
+            tensor_parallel_size=TENSOR_PARALLEL,
+            max_num_seqs=MAX_NUM_SEQS,
             trust_remote_code=True,
         )
+
         self.engine = AsyncLLMEngine.from_engine_args(args)
 
     def format_prompt(self, messages: List[dict]) -> str:
@@ -413,8 +462,10 @@ async def handle_generate(ws: WebSocketServerProtocol, msg: dict):
     """Handle text generation request."""
     rid = msg.get("request_id") or ""
     lang = (msg.get("language") or "en").lower()
-    temp = float(msg.get("temperature", 0.2))
-    max_tok = int(msg.get("max_tokens", 500))
+    temp = float(msg.get("temperature", DEFAULT_TEMP))
+    temp = max(temp, MIN_TEMP)  # never let it go below min
+    max_tok = int(msg.get("max_tokens", DEFAULT_MAX_TOKENS))
+
     messages = msg.get("messages", [])
     text_input = msg.get("text", "")  # Direct text input
     conversation = msg.get("conversation_history","")
@@ -641,7 +692,7 @@ async def warmup_model(model: QwenTextModel, num_warmup_runs: int = 2) -> None:
             text_generated = ""
             async for delta in model.stream_generate(
                 messages=warmup_messages,
-                temperature=0.2,
+                temperature=MIN_TEMP,
                 max_tokens=10  # Short response for warmup
             ):
                 text_generated += delta
@@ -654,7 +705,7 @@ async def warmup_model(model: QwenTextModel, num_warmup_runs: int = 2) -> None:
 
 async def initialize_model():
     """Initialize the Qwen model."""
-    model_name = os.environ.get("QWEN_MODEL", "Qwen/Qwen2.5-7B-Instruct")
+    model_name = QWEN_MODEL_NAME
     
     global MODEL
     MODEL = QwenTextModel(model_name)
@@ -678,11 +729,18 @@ async def main():
     logger.info(f"✓ Function calling enabled: function_call")
 
     # Start WebSocket server
-    host = os.environ.get("QWEN_HOST", "0.0.0.0")
-    port = int(os.environ.get("QWEN_PORT", "8766"))
+    host = QWEN_HOST
+    port = QWEN_PORT
 
     logger.info(f"🚀 Starting WS server on ws://{host}:{port}")
-    async with websockets.serve(ws_handler, host, port, ping_interval=20, ping_timeout=20, max_size=None):
+    async with websockets.serve(
+        ws_handler,
+        host,
+        port,
+        ping_interval=PING_INTERVAL,
+        ping_timeout=PING_TIMEOUT,
+        max_size=None
+    ):
         stop = asyncio.Future()
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
