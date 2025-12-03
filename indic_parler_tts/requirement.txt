@@ -1,0 +1,6 @@
+git+https://github.com/huggingface/parler-tts.git
+torch
+torchaudio
+torchvision
+websockets 
+transformers

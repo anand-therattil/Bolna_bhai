@@ -1,0 +1,8 @@
+websockets 
+torch
+torchaudio
+transformers
+torchvision
+accelerate
+torchcodec
+numpy
