@@ -1,0 +1,40 @@
+urls:
+  qwen_server: "ws://localhost:8766"
+  ai4bharat_server: "ws://localhost:7777"
+  indri_server: "ws://localhost:8888"
+
+prompts:
+  qwen_prompt: "You are a helpful assistant for Customer Support. Be helpful and answer the user's questions directly."
+
+qwen:
+  # ----- SERVER SETTINGS -----
+  system_prompt: "You are a helpful assistant for Customer Support. Be helpful and answer the user's questions directly."
+  host: "0.0.0.0"
+  port: 8766
+  model_name: "Qwen/Qwen2.5-7B-Instruct"
+
+  # --- MODEL & INFERENCE SETTINGS ---
+  gpu_memory_utilization: 0.6    # Safe adjustable GPU usage (vLLM)
+  max_model_len: 4096            # Max context length
+  temperature_min: 0.1           # Prevents zero-temp issues
+  default_temperature: 0.7       # Default sampling temp
+  default_max_tokens: 1024       # Default max tokens
+  partial_every_n_tokens: 3      # Partial streaming frequency
+  language: "en"
+
+  # ----- LOGGING SETTINGS -----
+  logging:
+    level: "INFO"
+    json: false
+    logfile: "qwen_server.log"
+
+  # ----- TIMEOUTS & SAFETY -----
+  timeouts:
+    generation_timeout_sec: 60
+    client_ping_interval: 20
+    client_ping_timeout: 20
+
+  # ----- ADVANCED vLLM OPTIONS -----
+  vllm:
+    tensor_parallel_size: 1
+    max_num_seqs: 2048
