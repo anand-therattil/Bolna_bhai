@@ -4,7 +4,8 @@ from vllm import LLM, SamplingParams
 # Load vLLM model (FP16 for speed)
 llm = LLM(
     model="./gpt2-finetuned-final",
-    dtype="float16"
+    dtype="float16",
+    gpu_memory_utilization=0.025
 )
 
 # Sampling configuration
