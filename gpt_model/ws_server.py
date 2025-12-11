@@ -2,18 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 GPT-2 WebSocket server wrapping vLLM AsyncLLMEngine.
-Protocol (JSON messages):
-- Client -> Server:
-    {"type": "connect", "caller_id": "..."}
-    {"type": "generate", "request_id": "...", "caller_id": "...", "text": "...",
-     "temperature": 0.7, "top_p": 0.9, "max_tokens": 200}
-    {"type": "cancel", "request_id": "..."}  # optional: cancel running request
-- Server -> Client:
-    {"type": "connected"}
-    {"type": "started", "request_id": "..."}
-    {"type": "partial", "request_id": "...", "text": "..."}
-    {"type": "completed", "request_id": "...", "text": "..."}
-    {"type": "error", "request_id": "...", "error": "..."}
+...
 """
 
 import asyncio
@@ -22,6 +11,7 @@ import logging
 import signal
 import time
 from typing import Dict, Any
+import multiprocessing
 
 import websockets
 from websockets.server import WebSocketServerProtocol
@@ -29,18 +19,16 @@ from websockets.server import WebSocketServerProtocol
 from vllm import AsyncLLMEngine, SamplingParams, AsyncEngineArgs
 
 # ---------------------------
-# Configuration - adjust as needed
-WS_HOST = "0.0.0.0"
-WS_PORT = 9999
-MODEL_PATH = "./gpt2-finetuned-polymarket-final"
-# vLLM engine args
+WS_HOST = "localhost"
+WS_PORT = 8764
+MODEL_PATH = "modelpath"
+
 ENGINE_ARGS = AsyncEngineArgs(
     model=MODEL_PATH,
     dtype="float16",
     gpu_memory_utilization=0.025,
 )
 
-# Default sampling params fallback
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_TOP_P = 0.9
 DEFAULT_MAX_TOKENS = 200
@@ -49,14 +37,10 @@ DEFAULT_MAX_TOKENS = 200
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("gpt2-ws-server")
 
-# Global LLM engine (initialized once)
-logger.info("Initializing vLLM Async engine...")
-llm = AsyncLLMEngine.from_engine_args(ENGINE_ARGS)
-logger.info("vLLM engine initialized.")
+# Global LLM engine reference — initialize later inside main()
+llm = None
 
-
-# Track running generation tasks per websocket and request_id so they can be cancelled
-_running_generations: Dict[str, Dict[str, asyncio.Task]] = {}  # {client_id: {request_id: task}}
+_running_generations: Dict[str, Dict[str, asyncio.Task]] = {}
 
 
 async def handle_generate_message(ws: WebSocketServerProtocol, msg: Dict[str, Any]) -> None:
@@ -64,6 +48,7 @@ async def handle_generate_message(ws: WebSocketServerProtocol, msg: Dict[str, An
     Handle a 'generate' message from the client and stream partial/completed events.
     Expected msg fields: request_id, caller_id, text, temperature, top_p, max_tokens
     """
+    final_text = ""
     request_id = msg.get("request_id") or f"request-{time.time()}"
     caller_id = msg.get("caller_id", "unknown")
     text = msg.get("text", "")
@@ -87,6 +72,7 @@ async def handle_generate_message(ws: WebSocketServerProtocol, msg: Dict[str, An
     )
 
     async def _run_generation():
+        nonlocal final_text
         try:
             # Inform client generation started
             await ws.send(json.dumps({"type": "started", "request_id": request_id}))
@@ -100,24 +86,31 @@ async def handle_generate_message(ws: WebSocketServerProtocol, msg: Dict[str, An
                 outputs = getattr(request_output, "outputs", None)
                 if not outputs:
                     continue
-                chunk_text = outputs[0].text or ""
 
-                # Clean text same as your code
-                if "<|response|>" in chunk_text:
-                    chunk_text = chunk_text.split("<|response|>", 1)[-1]
-                chunk_text = chunk_text.replace("<|endoftext|>", "").strip()
+                raw = outputs[0].text or ""
 
-                # Build the partial text to send. vLLM often returns cumulative text; we send it as partial.
-                final_text = chunk_text
+                # Always extract ONLY new tokens (delta)
+                delta = raw[len(final_text):]
 
-                # Send partial update
-                payload = {
-                    "type": "partial",
-                    "request_id": request_id,
-                    "caller_id": caller_id,
-                    "text": final_text
-                }
-                await ws.send(json.dumps(payload))
+                # Update accumulated
+                final_text = raw
+
+                # Clean delta only (not entire chunk)
+                delta = delta.replace("<|endoftext|>", "")
+                delta = delta.replace("<|response|>", "")
+                delta = delta
+
+
+
+                # Send partial update with cumulative text (not delta)
+                if delta:  # Only send if there's new content
+                    payload = {
+                        "type": "partial",
+                        "request_id": request_id,
+                        "caller_id": caller_id,
+                        "text": final_text  # Send cumulative text, not delta
+                    }
+                    await ws.send(json.dumps(payload))
 
             # After the generator completes, send completed with final text
             completed_payload = {
@@ -161,7 +154,7 @@ async def handle_generate_message(ws: WebSocketServerProtocol, msg: Dict[str, An
     _running_generations[client_key][request_id] = task
 
 
-async def handler(ws: WebSocketServerProtocol, path: str):
+async def handler(ws: WebSocketServerProtocol):
     """
     Per-connection WebSocket handler.
     Waits for a connect message first, then processes generate/cancel messages.
@@ -215,11 +208,26 @@ async def handler(ws: WebSocketServerProtocol, path: str):
 
 
 async def main():
+    global llm
+    
+    # On certain platforms it's harmless to call this; it helps when freezing to exe.
+    multiprocessing.freeze_support()
+
     stop = asyncio.Event()
 
     async def _stop_signal():
         logger.info("SIGTERM/SIGINT received. Stopping server...")
         stop.set()
+
+    # Initialize vLLM engine here (inside the guarded main)
+    logger.info("Initializing vLLM Async engine...")
+    try:
+        llm = AsyncLLMEngine.from_engine_args(ENGINE_ARGS)
+    except Exception as e:
+        logger.exception("Failed to initialize vLLM engine: %s", e)
+        raise
+
+    logger.info("vLLM engine initialized.")
 
     loop = asyncio.get_running_loop()
     loop.add_signal_handler(signal.SIGINT, lambda: asyncio.create_task(_stop_signal()))
@@ -230,6 +238,7 @@ async def main():
         await stop.wait()
 
     logger.info("Server shutting down...")
+
 
 
 if __name__ == "__main__":

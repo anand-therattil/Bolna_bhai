@@ -2,6 +2,7 @@ urls:
   qwen_server: "ws://localhost:8766"
   ai4bharat_server: "ws://localhost:7777"
   indri_server: "ws://localhost:8888"
+  gpt2_server: "ws://localhost:9999"
 
 prompts:
   qwen_prompt: "You are a helpful assistant for Customer Support. Be helpful and answer the user's questions directly."

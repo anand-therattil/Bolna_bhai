@@ -2,3 +2,5 @@
 .env
 *.wav
 env
+
+training/gpt2/gpt2-finetuned-polymarket-final/

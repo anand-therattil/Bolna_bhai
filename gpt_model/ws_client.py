@@ -17,12 +17,13 @@ import json
 import uuid
 import logging
 import websockets
-from config.loader import load_config
+# from config.loader import load_config
 from typing import Optional, Dict, Any, List
 from websockets.client import WebSocketClientProtocol
 
-cfg = load_config()
-GPT2_URL = cfg["urls"]["gpt2_server"]  # ADD gpt2_server entry in your config
+# cfg = load_config()
+# GPT2_URL = cfg["urls"]["gpt2_server"]  # ADD gpt2_server entry in your config
+GPT2_URL = "ws://localhost:8764"
 
 logging.basicConfig(
     level=logging.INFO,
