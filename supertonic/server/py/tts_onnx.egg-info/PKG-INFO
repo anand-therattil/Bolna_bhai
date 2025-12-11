@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: tts-onnx
+Version: 1.0.0
+Summary: TTS ONNX Inference
+Requires-Python: >=3.10
+Requires-Dist: onnxruntime==1.23.1
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: soundfile>=0.12.1
+Requires-Dist: librosa>=0.10.0
+Requires-Dist: PyYAML>=6.0
