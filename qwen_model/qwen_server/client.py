@@ -240,7 +240,7 @@ async def main():
         # Example 4: Trigger function call
         logger.info("\n--- Example 4: Function Call ---")
         response = await client.generate_text(
-            text="What products do you sell at TELECMI ?",
+            text="What products do you sell at Myntra ?",
             temperature=0.7,
             max_tokens=300
         )
@@ -286,10 +286,6 @@ async def minimal_example():
 
 
 if __name__ == "__main__":
-    # Run the example
     logger.info("Starting Qwen Client Example...")
     logger.info("-" * 50)
-
-    # Choose which example to run
-    # asyncio.run(minimal_example())  # Uncomment for minimal example
-    asyncio.run(main())  # Full examples
+    asyncio.run(main())  
