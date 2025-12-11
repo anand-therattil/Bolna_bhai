@@ -20,6 +20,7 @@ from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.deepgram.tts import DeepgramTTSService
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.services.gpt2.llm import GPT2WebSocketLLMService
+from pipecat.services.supertonic.tts import InterruptibleCustomTTSService
 from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 
@@ -59,8 +60,11 @@ async def run_bot(webrtc_connection):
     # tts = IndicParlerTTSService(
     #         websocket_url="ws://localhost:8763",
     #         voice_preset="female_expressive",  # or custom description
-    #     )
-    # llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    #     )     
+    tts = InterruptibleCustomTTSService(
+        url="ws://0.0.0.0:8764",
+    )                  
+    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
 
 
     messages = [
