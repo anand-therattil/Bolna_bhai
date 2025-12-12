@@ -10,8 +10,8 @@ from typing import Dict, Optional, List
 import sys
 from pathlib import Path
 
-# go up three levels: qwen.py -> qwen_server (1) -> qwen_model (2) -> Bolan_bhai (3)
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+# go up three levels: qwen.py -> qwen_model (1) -> llm (2) -> Bolan_bhai (3)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 import websockets
