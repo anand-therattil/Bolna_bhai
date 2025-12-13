@@ -24,8 +24,12 @@ with open(CONFIG_PATH, "r") as f:
 
 VOSK_CONFIG = CONFIG["asr"]["vosk"]
 SAMPLE_RATE = VOSK_CONFIG.get("sample_rate", 16000)
+HOST = VOSK_CONFIG.get("host", "0.0.0.0")
+PORT = VOSK_CONFIG.get("port", 8765)
+
 
 class VoskWebSocketServer:
+    global SAMPLE_RATE, HOST, PORT
     def __init__(self, model_path):
         print("Loading Vosk Model...")
         self.model = Model(model_path)
@@ -112,7 +116,7 @@ class VoskWebSocketServer:
                 "error": "Invalid JSON received"
             }))
 
-    async def start(self, host="0.0.0.0", port=8765):
+    async def start(self, host=HOST, port=PORT):
         print(f"Starting Vosk WebSocket server on ws://{host}:{port}")
         async with websockets.serve(self.process_client, host, port):
             await asyncio.Future() 
@@ -121,5 +125,6 @@ class VoskWebSocketServer:
 if __name__ == "__main__":
     server = VoskWebSocketServer(
         model_path=VOSK_CONFIG["model_path"]
+
     )
     asyncio.run(server.start())
