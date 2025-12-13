@@ -14,13 +14,17 @@ from pipecat.processors.aggregators.llm_response import (
     LLMAssistantContextAggregator,
 )
 # from pipecat.services.ai4bharat.stt import Ai4BharatSTTService
+# from pipecat.services.deepgram.stt import DeepgramSTTService
+from pipecat.services.vosk.stt import VoskSTTService
+
 # from pipecat.services.indic_parler.tts import IndicParlerTTSService
 # from pipecat.services.indri.tts import IndriTTSService
-from pipecat.services.deepgram.stt import DeepgramSTTService
-from pipecat.services.deepgram.tts import DeepgramTTSService
-from pipecat.services.openai.llm import OpenAILLMService
-from pipecat.services.gpt2.llm import GPT2WebSocketLLMService
+# from pipecat.services.deepgram.tts import DeepgramTTSService
 from pipecat.services.supertonic.tts import InterruptibleCustomTTSService
+
+# from pipecat.services.openai.llm import OpenAILLMService
+from pipecat.services.gpt2.llm import GPT2WebSocketLLMService
+
 from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 
@@ -44,13 +48,17 @@ async def run_bot(webrtc_connection):
         ),
     )
     # stt = Ai4BharatSTTService(ws_url = "ws://localhost:8761",language= "hi",)
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"), language="en-US")
+    # stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"), language="en-US")
+    stt = VoskSTTService(ws_url="ws://localhost:8766")
+    
     llm = GPT2WebSocketLLMService(
         ws_url="ws://localhost:8764",
         caller_id=12345,
     )
+    # llm = OpenAILLMService(api_key= os.getenv("OPENAI_API_KEY"))
 
-    tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY"), voice="aura-2-andromeda-en")
+    # tts = DeepgramTTSService(api_key= os.getenv("DEEPGRAM_API_KEY"),
+    #                           voice="aura-2-andromeda-en")
     # tts = IndriTTSService(
     #     base_url="ws://localhost:8760",
     #     voice="[spkr_63]",
@@ -64,7 +72,7 @@ async def run_bot(webrtc_connection):
     tts = InterruptibleCustomTTSService(
         url="ws://0.0.0.0:8764",
     )                  
-    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    
 
 
     messages = [
