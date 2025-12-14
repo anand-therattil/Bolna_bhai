@@ -46,7 +46,8 @@ qwen:
 
 asr:
   vosk:
-    ws_url: "ws://localhost:8765"
-    model_path: "/Users/xxxxxxxxxx/Bolna_Bhai/vosk/models/vosk-model-small-en-in-0.4"
+    host: "0.0.0.0"
+    port: 8766
+    model_path: "<<<<PATH TO THE REPO>>>>Bolna_bhai/asr/vosk/models/vosk-model-small-en-in-0.4"
     sample_rate: 16000
     persistent_connection: true
