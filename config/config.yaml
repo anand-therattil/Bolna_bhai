@@ -39,3 +39,15 @@ qwen:
   vllm:
     tensor_parallel_size: 1
     max_num_seqs: 2048
+
+
+
+
+
+asr:
+  vosk:
+    host: "0.0.0.0"
+    port: 8766
+    model_path: "<<<<PATH TO THE REPO>>>>Bolna_bhai/asr/vosk/models/vosk-model-small-en-in-0.4"
+    sample_rate: 16000
+    persistent_connection: true

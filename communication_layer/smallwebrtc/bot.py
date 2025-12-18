@@ -17,11 +17,12 @@ from pipecat.processors.aggregators.llm_response import (
 from pipecat.services.vosk.stt import VoskWebSocketSTT
 # from pipecat.services.indic_parler.tts import IndicParlerTTSService
 # from pipecat.services.indri.tts import IndriTTSService
-from pipecat.services.deepgram.stt import DeepgramSTTService
-from pipecat.services.deepgram.tts import DeepgramTTSService
-from pipecat.services.openai.llm import OpenAILLMService
-from pipecat.services.gpt2.llm import GPT2WebSocketLLMService
+# from pipecat.services.deepgram.tts import DeepgramTTSService
 from pipecat.services.supertonic.tts import InterruptibleCustomTTSService
+
+# from pipecat.services.openai.llm import OpenAILLMService
+from pipecat.services.gpt2.llm import GPT2WebSocketLLMService
+
 from pipecat.transports.base_transport import TransportParams
 from pipecat.transports.smallwebrtc.transport import SmallWebRTCTransport
 
@@ -53,6 +54,7 @@ async def run_bot(webrtc_connection):
         ws_url="ws://localhost:8763",
         caller_id=12345,
     )
+    # llm = OpenAILLMService(api_key= os.getenv("OPENAI_API_KEY"))
 
 
     # tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY"), voice="aura-2-andromeda-en")
