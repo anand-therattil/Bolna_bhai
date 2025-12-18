@@ -20,8 +20,8 @@ from vllm import AsyncLLMEngine, SamplingParams, AsyncEngineArgs
 
 # ---------------------------
 WS_HOST = "localhost"
-WS_PORT = 8764
-MODEL_PATH = "modelpath"
+WS_PORT = 8763
+MODEL_PATH = "/Users/cmi_10128/Desktop/documents/projects/Bolna_bhai/gpt_model/gpt2-finetuned-polymarket-final"
 
 ENGINE_ARGS = AsyncEngineArgs(
     model=MODEL_PATH,
@@ -120,7 +120,7 @@ async def handle_generate_message(ws: WebSocketServerProtocol, msg: Dict[str, An
                 "text": final_text
             }
             await ws.send(json.dumps(completed_payload))
-            logger.info(f"[{caller_id}] completed {request_id}")
+            logger.info(f"[{caller_id}] completed {request_id}, complete payload: {completed_payload}")
 
         except asyncio.CancelledError:
             logger.info(f"[{caller_id}] Generation cancelled: {request_id}")
