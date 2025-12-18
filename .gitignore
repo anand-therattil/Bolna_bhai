@@ -1,6 +1,13 @@
-**__pycache__**
-.env
-*.wav
-env
+# Python
+__pycache__/
+*.pyc
 
-training/gpt2/gpt2-finetuned-polymarket-final/
+# Env
+.env
+env/
+
+# Audio
+*.wav
+
+# Ignore finetuned model artifacts
+gpt_model/gpt2-finetuned-polymarket-final/

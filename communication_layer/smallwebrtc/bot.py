@@ -14,6 +14,7 @@ from pipecat.processors.aggregators.llm_response import (
     LLMAssistantContextAggregator,
 )
 # from pipecat.services.ai4bharat.stt import Ai4BharatSTTService
+from pipecat.services.vosk.stt import VoskWebSocketSTT
 # from pipecat.services.indic_parler.tts import IndicParlerTTSService
 # from pipecat.services.indri.tts import IndriTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
@@ -44,13 +45,17 @@ async def run_bot(webrtc_connection):
         ),
     )
     # stt = Ai4BharatSTTService(ws_url = "ws://localhost:8761",language= "hi",)
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"), language="en-US")
+    # stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"), language="en-US")
+    stt = VoskWebSocketSTT(url = "ws://localhost:8762",)
+                  
+    # llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
     llm = GPT2WebSocketLLMService(
-        ws_url="ws://localhost:8764",
+        ws_url="ws://localhost:8763",
         caller_id=12345,
     )
 
-    tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY"), voice="aura-2-andromeda-en")
+
+    # tts = DeepgramTTSService(api_key=os.getenv("DEEPGRAM_API_KEY"), voice="aura-2-andromeda-en")
     # tts = IndriTTSService(
     #     base_url="ws://localhost:8760",
     #     voice="[spkr_63]",
@@ -62,11 +67,8 @@ async def run_bot(webrtc_connection):
     #         voice_preset="female_expressive",  # or custom description
     #     )     
     tts = InterruptibleCustomTTSService(
-        url="ws://0.0.0.0:8764",
-    )                  
-    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
-
-
+        url="ws://localhost:8761",
+    )
     messages = [
         {
             "role": "system",
