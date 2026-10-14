@@ -12,6 +12,7 @@ import signal
 import time
 from typing import Dict, Any
 import multiprocessing
+import os
 
 import websockets
 from websockets.server import WebSocketServerProtocol
@@ -21,7 +22,7 @@ from vllm import AsyncLLMEngine, SamplingParams, AsyncEngineArgs
 # ---------------------------
 WS_HOST = "localhost"
 WS_PORT = 8763
-MODEL_PATH = "/Users/cmi_10128/Desktop/documents/projects/Bolna_bhai/gpt_model/gpt2-finetuned-polymarket-final"
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gpt2-finetuned-polymarket-final")
 
 ENGINE_ARGS = AsyncEngineArgs(
     model=MODEL_PATH,
